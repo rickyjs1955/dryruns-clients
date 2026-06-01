@@ -33,3 +33,15 @@ jobs:
           # route compilable; no estimate calls are made at build time.
           BUDGETARY_API_BASE: https://api.budgetary.tools
           BUDGETARY_API_KEY: ci-placeholder
+
+      - name: Verify the API key is not bundled
+        run: |
+          # The build-time BUDGETARY_API_KEY (ci-placeholder) is read only at
+          # runtime in the server route, so it must never appear in the build
+          # output. If it does, a secret was inlined (e.g. via a NEXT_PUBLIC_
+          # prefix or string interpolation) — fail the build.
+          if grep -rl "ci-placeholder" .next 2>/dev/null; then
+            echo "::error::BUDGETARY_API_KEY value leaked into the build output (.next)"
+            exit 1
+          fi
+          echo "OK: API key value absent from .next output"
