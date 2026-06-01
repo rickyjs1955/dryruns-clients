@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/*
+ * dryruns.tools design tokens.
+ * A calm, report-like surface — this is a tool for reading numbers, not a
+ * marketing splash. Dark slate base with a single restrained accent.
+ */
+@theme {
+  --color-ink: #0b0e14;
+  --color-surface: #11151f;
+  --color-surface-2: #161b27;
+  --color-border: #232a3a;
+  --color-muted: #8b95ab;
+  --color-fg: #e6e9f0;
+  --color-accent: #6ee7b7;
+  --color-accent-strong: #34d399;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures for token counts so digits line up in the report. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}

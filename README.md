@@ -1,0 +1,115 @@
+# dryruns.tools
+
+**See what an AI coding task costs — on a repo you know.**
+
+A free demo by **[budgetary.tools](https://budgetary.tools)**. Pick a realistic
+coding task against a familiar public codebase ([Open WebUI](https://github.com/open-webui/open-webui)),
+and dryruns.tools shows you what that task would *cost in tokens* before you run
+it — a p10/p50/p90 range, a scenario label, and a confidence value. Then run the
+same task in your own Claude Code or Codex and compare the estimate to the real
+spend.
+
+> The button verb is **Dry-run it →**.
+
+## What this is (and isn't)
+
+- It's a **thin client**. Every estimate comes from the hosted budgetary.tools
+  API. There is **no local estimation logic, no heuristics, and no fallback that
+  makes up a number** — if the API declines or errors, the app says so honestly.
+- It **references** Open WebUI tasks by description only. No Open WebUI source is
+  copied, hosted, forked, or rebranded here.
+- It stores nothing. No telemetry, no saved prompts, no saved results.
+
+> **Not affiliated with Open WebUI.** Task descriptions reference the Open WebUI
+> project for realism only. Catalog pinned to Open WebUI **v0.9.5**
+> (commit `3660bc0`).
+
+## How it works
+
+```
+browser ──{ query, model? }──▶  /api/estimate  ──Bearer key──▶  budgetary.tools API
+                                  (server route,                  POST /v1/estimate
+                                   key-holding proxy)
+```
+
+The API key is a **server-side secret**. The browser only ever talks to the
+local `/api/estimate` route, which adds the `Authorization` header and forwards
+the request. The key is never shipped in the client bundle and never logged.
+
+The report renders **only** what the API returns: the scenario label, the
+p10/p50/p90 token numbers, the confidence value, and the echoed model.
+
+## Run locally
+
+Requires Node 20+.
+
+```bash
+# 1. Install
+npm install
+
+# 2. Configure — copy the example and fill in your values
+cp .env.example .env.local
+#   BUDGETARY_API_BASE=https://api.budgetary.tools
+#   BUDGETARY_API_KEY=<your budgetary.tools API key>
+
+# 3. Dev server
+npm run dev
+# open http://localhost:3000
+```
+
+Without a valid `BUDGETARY_API_KEY`, the catalog and UI still render, but
+estimate requests will return an error state (by design — there is no fallback
+number).
+
+### Scripts
+
+| Script              | What it does                          |
+| ------------------- | ------------------------------------- |
+| `npm run dev`       | Start the dev server                  |
+| `npm run build`     | Production build                      |
+| `npm run start`     | Serve the production build            |
+| `npm run lint`      | ESLint (`next lint`)                  |
+| `npm run typecheck` | `tsc --noEmit`                        |
+
+## Environment variables
+
+| Name                         | Required | Purpose                                                        |
+| ---------------------------- | -------- | -------------------------------------------------------------- |
+| `BUDGETARY_API_BASE`         | yes      | Base URL of the hosted API, e.g. `https://api.budgetary.tools` |
+| `BUDGETARY_API_KEY`          | yes      | Server-side bearer token. Never exposed to the browser.        |
+| `DRYRUNS_DISABLED`           | no       | Kill switch — `1`/`true` makes the proxy return a 503.         |
+| `DRYRUNS_RATE_LIMIT_PER_MIN` | no       | Per-IP request cap per minute (default `12`).                  |
+
+`.env.example` lists the variable **names** only. Never commit real secrets.
+
+## Deploy
+
+Deployable to **Vercel** or **Railway** as a standard Next.js app. Set
+`BUDGETARY_API_BASE` and `BUDGETARY_API_KEY` as environment variables in the
+host's dashboard (not in the repo). See [docs at the bottom of this README](#deploy-notes).
+
+## License
+
+[Apache-2.0](./LICENSE). © budgetary.tools.
+
+---
+
+### Deploy notes
+
+**Vercel**
+
+1. Import the repo. Framework preset: **Next.js** (auto-detected).
+2. Project → Settings → Environment Variables: add `BUDGETARY_API_BASE` and
+   `BUDGETARY_API_KEY` (and optionally `DRYRUNS_DISABLED`,
+   `DRYRUNS_RATE_LIMIT_PER_MIN`).
+3. Deploy. The proxy route runs as a serverless function.
+
+**Railway**
+
+1. New project → Deploy from repo.
+2. Add the same environment variables under the service's Variables tab.
+3. Build command `npm run build`, start command `npm run start`.
+
+> Note: per-IP rate limiting is best-effort in-memory and is per-instance. For
+> multi-instance deployments, front it with a shared limiter (e.g. an edge
+> middleware or a Redis-backed limiter) if abuse becomes a concern.

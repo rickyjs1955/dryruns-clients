@@ -1,0 +1,30 @@
+{
+  "name": "dryruns",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dryruns.tools — see what an AI coding task costs in tokens before you run it. A free demo by budgetary.tools.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "15.5.18",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.1",
+    "@tailwindcss/postcss": "4.1.8",
+    "@types/node": "20.17.50",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "eslint": "9.28.0",
+    "eslint-config-next": "15.5.18",
+    "tailwindcss": "4.1.8",
+    "typescript": "5.8.3"
+  }
+}
