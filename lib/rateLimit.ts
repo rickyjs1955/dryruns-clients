@@ -27,8 +27,18 @@ export interface RateLimitResult {
 
 function prune(now: number): void {
   if (buckets.size < MAX_TRACKED_KEYS) return;
+  // First, drop any windows that have already expired.
   for (const [key, bucket] of buckets) {
     if (bucket.resetAt <= now) buckets.delete(key);
+  }
+  // Under a distinct-key flood (e.g. spoofed x-forwarded-for), every window
+  // may still be active and the expiry sweep frees nothing. Hard-cap the map
+  // by evicting the oldest entries — Map preserves insertion order — so memory
+  // stays bounded even under abuse.
+  while (buckets.size >= MAX_TRACKED_KEYS) {
+    const oldest = buckets.keys().next().value;
+    if (oldest === undefined) break;
+    buckets.delete(oldest);
   }
 }
 

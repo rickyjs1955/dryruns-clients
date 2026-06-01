@@ -6,6 +6,8 @@ import { modelTool } from "@/lib/models";
 interface DryRunCtaProps {
   query: string;
   model: string;
+  /** True when a real estimate is shown above; false on the void path. */
+  compareToEstimate: boolean;
 }
 
 /**
@@ -13,7 +15,7 @@ interface DryRunCtaProps {
  * and compare your real spend to the estimate above. The copy button keeps the
  * prompt on the client — nothing is sent anywhere.
  */
-export function DryRunCta({ query, model }: DryRunCtaProps) {
+export function DryRunCta({ query, model, compareToEstimate }: DryRunCtaProps) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -30,8 +32,18 @@ export function DryRunCta({ query, model }: DryRunCtaProps) {
     <section className="rounded-xl border border-accent-strong/30 bg-accent-strong/5 p-5">
       <h3 className="text-base font-semibold text-fg">Dry-run it →</h3>
       <p className="mt-1 text-sm text-muted">
-        Run this exact task in your own {modelTool(model)} (or any agent), then
-        compare your real token spend to the estimate above.
+        {compareToEstimate ? (
+          <>
+            Run this exact task in your own {modelTool(model)} (or any agent),
+            then compare your real token spend to the estimate above.
+          </>
+        ) : (
+          <>
+            Run this exact task in your own {modelTool(model)} (or any agent) and
+            see your real token spend — there&apos;s no estimate to compare
+            against for this one, but the dry-run is still worth doing.
+          </>
+        )}
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button

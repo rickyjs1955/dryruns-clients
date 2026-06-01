@@ -49,10 +49,16 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/** Token counts per the contract: non-negative integers. */
+function isTokenCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
 function parseDistribution(raw: unknown): Distribution | null {
   if (!raw || typeof raw !== "object") return null;
   const d = raw as Record<string, unknown>;
-  if (!isFiniteNumber(d.p10) || !isFiniteNumber(d.p50) || !isFiniteNumber(d.p90)) {
+  // Fail honest on a malformed payload rather than render a nonsensical range.
+  if (!isTokenCount(d.p10) || !isTokenCount(d.p50) || !isTokenCount(d.p90)) {
     return null;
   }
   return {

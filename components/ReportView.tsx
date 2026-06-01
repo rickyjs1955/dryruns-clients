@@ -177,7 +177,11 @@ export function ReportView({
       </div>
 
       {showCompareCtas && (
-        <DryRunCta query={active.query} model={active.model} />
+        <DryRunCta
+          query={active.query}
+          model={active.model}
+          compareToEstimate={result?.status === "ok"}
+        />
       )}
 
       <SignupCta />

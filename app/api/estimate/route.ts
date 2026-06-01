@@ -18,7 +18,8 @@ export const runtime = "nodejs";
 // This route must run per-request: it forwards live calls and reads secrets.
 export const dynamic = "force-dynamic";
 
-const MAX_QUERY_LEN = 4000;
+// Matches the API contract's EstimateRequest.query maxLength (8000).
+const MAX_QUERY_LEN = 8000;
 const MAX_MODEL_LEN = 128;
 const UPSTREAM_TIMEOUT_MS = 20_000;
 const DEFAULT_RATE_LIMIT_PER_MIN = 12;
@@ -150,7 +151,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
+  // Both the request and the body read run under the abort timer, so a
+  // mid-body stall is also bounded and surfaces as an honest 502.
   let upstream: Response;
+  let text: string;
   try {
     upstream = await fetch(`${base}/v1/estimate`, {
       method: "POST",
@@ -163,8 +167,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       signal: controller.signal,
       cache: "no-store",
     });
+    text = await upstream.text();
   } catch {
-    // Network failure or timeout. Never include the prompt or key in logs.
+    // Network failure, timeout, or a dropped body. Never log the prompt or key.
     console.error("[estimate] upstream request failed (network/timeout)");
     return jsonError(
       "upstream_error",
@@ -176,7 +181,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 6. Return the upstream JSON response unchanged (status + parsed body).
-  const text = await upstream.text();
   let parsed: unknown;
   try {
     parsed = text ? JSON.parse(text) : null;
