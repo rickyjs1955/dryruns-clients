@@ -8,6 +8,7 @@ import { Hero } from "./Hero";
 import { ModelSelector } from "./ModelSelector";
 import { TaskCard } from "./TaskCard";
 import { PromptBox } from "./PromptBox";
+import { ReportView } from "./ReportView";
 
 export interface ActiveRun {
   query: string;
@@ -66,45 +67,20 @@ export function DryrunApp() {
     if (q) run(q, "Your custom task");
   }, [customQuery, run]);
 
-  // --- Report screen (minimal in Stage 3) ---
+  const onRetry = useCallback(() => {
+    if (active) run(active.query, active.label);
+  }, [active, run]);
+
+  // --- Report screen ---
   if (active) {
     return (
-      <div className="flex flex-col gap-6 py-8">
-        <button
-          type="button"
-          onClick={reset}
-          className="self-start text-sm text-muted transition-colors hover:text-fg"
-        >
-          ← Back to catalog
-        </button>
-
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="text-xs uppercase tracking-wide text-muted">
-            Dry-run · {active.model}
-          </p>
-          <p className="mt-2 text-lg font-medium">{active.label}</p>
-          <p className="mt-1 text-sm text-muted">{active.query}</p>
-
-          <div className="mt-6 border-t border-border pt-6">
-            {loading && <p className="text-muted">Estimating…</p>}
-
-            {!loading && result?.status === "ok" && (
-              <p className="tabular text-2xl">
-                {result.estimate.distribution!.p50.toLocaleString()}{" "}
-                <span className="text-sm text-muted">tokens (p50)</span>
-              </p>
-            )}
-
-            {!loading && result?.status === "void" && (
-              <p className="text-muted">Not enough signal to estimate this one.</p>
-            )}
-
-            {!loading && result?.status === "error" && (
-              <p className="text-muted">{result.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
+      <ReportView
+        active={active}
+        result={result}
+        loading={loading}
+        onBack={reset}
+        onRetry={onRetry}
+      />
     );
   }
 
