@@ -39,6 +39,35 @@ the request. The key is never shipped in the client bundle and never logged.
 The report renders **only** what the API returns: the scenario label, the
 p10/p50/p90 token numbers, the confidence value, and the echoed model.
 
+## Project structure
+
+```
+app/
+  layout.tsx              Root layout + metadata
+  page.tsx                Home (TopBar + DryrunApp + SiteFooter)
+  not-found.tsx           Custom 404
+  icon.svg                Favicon
+  api/estimate/route.ts   Key-holding proxy → budgetary.tools /v1/estimate
+components/               Presentational + the DryrunApp client controller
+lib/
+  budgetary.ts            API contract types, parseEstimate, fetchEstimate
+  rateLimit.ts            Per-IP in-memory limiter (proxy only)
+  catalog.ts              Catalog loader + Open WebUI pin constants
+  models.ts               Model options forwarded as `model`
+  links.ts                External URLs
+data/openwebui-tasks.json Static catalog (task descriptions only)
+```
+
+## Security posture
+
+- The API key lives only in `BUDGETARY_API_KEY`, read **server-side** in the
+  proxy route. It is never prefixed `NEXT_PUBLIC_`, never sent to the browser,
+  and never logged. (CI/verification scans the built `.next` output to confirm
+  the key string is absent.)
+- The browser only ever calls the same-origin `/api/estimate` route.
+- The proxy rate-limits per IP and honors a `DRYRUNS_DISABLED` kill switch.
+- No prompts or results are stored anywhere — no telemetry in the MVP.
+
 ## Run locally
 
 Requires Node 20+.
