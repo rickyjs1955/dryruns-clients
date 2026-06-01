@@ -1,68 +1,62 @@
 [
   {
-    "id": "oauth-sso",
-    "label": "Add OAuth/OIDC SSO login",
-    "query": "add a microsoft entra id and github oauth login to open webui, including the redirect handling and a working sign-out flow",
+    "id": "twofa-totp",
+    "label": "TOTP two-factor authentication",
+    "query": "implement totp-based two-factor authentication for open webui login, including enrollment with a qr code, recovery codes, and an admin toggle to require it",
     "tier_hint": "large"
   },
   {
-    "id": "oauth-logout",
-    "label": "Fix broken OAuth sign-out",
-    "query": "fix the bug where signing out via the oauth provider does not clear the open webui session",
+    "id": "shared-chat-auth",
+    "label": "Access control for shared chats",
+    "query": "add access control and permissions for shared chats so a shared conversation can be limited to specific users or groups instead of being public to anyone with the link",
     "tier_hint": "medium"
   },
   {
-    "id": "model-access",
-    "label": "Per-group model access control",
-    "query": "add admin controls so user groups can be scoped to which models they can see and call",
+    "id": "extraction-settings",
+    "label": "Separate content-extraction settings",
+    "query": "add separate content-extraction settings for chat uploads versus knowledge base documents so each can use a different extraction engine and configuration",
+    "tier_hint": "medium"
+  },
+  {
+    "id": "mcp-confirm",
+    "label": "Confirm inputs to MCP tools",
+    "query": "add a confirmation step in the ui that shows the inputs being passed to an mcp tool and asks the user to approve before the tool call runs",
+    "tier_hint": "medium"
+  },
+  {
+    "id": "raw-upload",
+    "label": "Upload files without processing",
+    "query": "add an option to upload files without any backend processing or text extraction, so a raw file can be stored and attached to a chat as-is",
+    "tier_hint": "medium"
+  },
+  {
+    "id": "realtime-api",
+    "label": "OpenAI realtime voice API",
+    "query": "integrate the openai realtime voice api so users can have a live spoken conversation with the model, streaming audio in and out over a websocket",
     "tier_hint": "large"
   },
   {
-    "id": "alembic-migration",
-    "label": "Cross-DB Alembic migration",
-    "query": "write an alembic migration adding a per-chat metadata table that works on both sqlite and postgres",
-    "tier_hint": "medium"
-  },
-  {
-    "id": "vector-backend",
-    "label": "Add a vector-DB backend (RAG)",
-    "query": "add support for a new vector database backend in the rag pipeline behind a config flag",
+    "id": "data-sources",
+    "label": "External data-source connectors",
+    "query": "build a system of external data-source connectors so users can connect open webui to outside sources like databases, apis, or cloud drives and query them in chat",
     "tier_hint": "large"
   },
   {
-    "id": "web-search",
-    "label": "Integrate a web-search provider",
-    "query": "integrate a new web search provider into the web-browsing feature with settings ui and a backend client",
-    "tier_hint": "medium"
-  },
-  {
-    "id": "image-gen",
-    "label": "Add an image-generation backend",
-    "query": "add a new image generation backend with model selection and parameter controls",
-    "tier_hint": "medium"
-  },
-  {
-    "id": "followups",
-    "label": "Configurable follow-up suggestions",
-    "query": "build a configurable follow-up suggestion prompts feature in the sveltekit frontend with matching fastapi endpoints",
+    "id": "nextcloud",
+    "label": "Nextcloud documents integration",
+    "query": "add a nextcloud integration so users can browse and import their nextcloud documents into open webui as knowledge base files",
     "tier_hint": "large"
   },
   {
-    "id": "scim-ldap",
-    "label": "SCIM/LDAP provisioning",
-    "query": "implement scim 2.0 and ldap user provisioning with group sync for enterprise deployments",
+    "id": "kb-ocr",
+    "label": "Knowledge base image import + OCR",
+    "query": "add image support to the knowledge base so users can upload images and scanned documents, run ocr to extract text, and view the original image alongside the extracted content",
     "tier_hint": "xlarge"
   },
   {
-    "id": "redis-scaling",
-    "label": "Harden Redis session scaling",
-    "query": "harden redis-backed session handling for correct multi-replica horizontal scaling of the websocket layer",
-    "tier_hint": "large"
-  },
-  {
-    "id": "otel",
-    "label": "Add OpenTelemetry spans",
-    "query": "add opentelemetry spans and metrics around model calls and rag retrieval",
-    "tier_hint": "medium"
+    "id": "mobile-app",
+    "label": "Native companion mobile app",
+    "query": "build a native companion mobile app for open webui that connects to a self-hosted server, supports chat with streaming responses, voice input, and push notifications",
+    "tier_hint": "xlarge"
   }
 ]
