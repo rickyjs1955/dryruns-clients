@@ -49,7 +49,7 @@ function EstimateBody({ estimate }: { estimate: Estimate }) {
             {dist.p50.toLocaleString()}
           </p>
           <p className="mt-1 text-sm text-muted">
-            estimated {dist.unit} (p50) · combined input + output
+            estimated tokens (p50) · combined input + output
           </p>
         </div>
         <ScenarioBadge scenario={estimate.scenario} />

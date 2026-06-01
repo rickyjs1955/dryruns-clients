@@ -22,11 +22,10 @@ export const SCENARIOS = [
 export type Scenario = (typeof SCENARIOS)[number];
 
 export interface Distribution {
+  // Token counts (combined input + output), per the frozen public shape.
   p10: number;
   p50: number;
   p90: number;
-  /** Always combined input + output tokens, per the API contract. */
-  unit: string;
 }
 
 export interface Estimate {
@@ -67,7 +66,6 @@ function parseDistribution(raw: unknown): Distribution | null {
     p10: d.p10,
     p50: d.p50,
     p90: d.p90,
-    unit: typeof d.unit === "string" ? d.unit : "tokens",
   };
 }
 
