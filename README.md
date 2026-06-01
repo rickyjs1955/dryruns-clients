@@ -9,6 +9,10 @@ it — a p10/p50/p90 range, a scenario label, and a confidence value. Then run t
 same task in your own Claude Code or Codex and compare the estimate to the real
 spend.
 
+This repository (`dryruns-clients`) collects clients of the hosted
+budgetary.tools token-estimate API. The first is the **dryruns.tools** web demo
+described here; see [Modes](#modes) for the two ways a client talks to the API.
+
 > The button verb is **Dry-run it →**.
 
 ## What this is (and isn't)
@@ -39,6 +43,80 @@ the request. The key is never shipped in the client bundle and never logged.
 The report renders **only** what the API returns: the scenario label, the
 p10/p50/p90 token numbers, the confidence value, and the echoed model.
 
+## Modes
+
+A client can reach the hosted estimate API two ways. The switch lives in one
+place — [`lib/mode.ts`](lib/mode.ts) — and defaults to **demo**. A single typed
+entry point, `fetchEstimate` in [`lib/budgetary.ts`](lib/budgetary.ts), returns
+the same result in both.
+
+| Mode | Base | Endpoint | Auth | When |
+| --- | --- | --- | --- | --- |
+| **demo** (default) | `https://dryruns.tools` | `POST /api/estimate` | none — keyless | Zero-config trial. The server route holds the key and rate-limits per IP. |
+| **real** | `https://api.budgetary.tools` | `POST /v1/estimate` | `Authorization: Bearer <your key>` | Production, bring-your-own-key. Runs server-side. |
+
+**Request body (both):** `{ "query": string, "model"?: string }`. In demo mode
+the proxy injects `context` (`host`, `project_id`) server-side; in real mode you
+may pass your own `context`.
+
+**Response (both):** the frozen public shape — consume only these fields:
+
+```json
+{
+  "scenario": "confident | uncertain | sparse_evidence | out_of_domain",
+  "void": false,
+  "distribution": { "p10": 0, "p50": 0, "p90": 0 },
+  "confidence": 0.0,
+  "model": "..."
+}
+```
+
+When `void` is `true`, `distribution` is `null`. On void or any error a client
+shows the honest state — never a fabricated number.
+
+### Try the demo
+
+No setup needed — open **[https://dryruns.tools](https://dryruns.tools)**. Or
+call the keyless proxy directly:
+
+```bash
+curl -s https://dryruns.tools/api/estimate \
+  -H 'content-type: application/json' \
+  -d '{"query":"add github oauth login to open webui","model":"claude-sonnet-4-6"}'
+```
+
+In code, demo mode is the default and is safe in the browser:
+
+```ts
+import { fetchEstimate } from "@/lib/budgetary";
+
+// demo (default): keyless, same-origin proxy
+const result = await fetchEstimate({ query, model });
+```
+
+### Real mode (bring your own key)
+
+Real mode calls the hosted API directly with your key. **The key is server-side
+only** — set it in the environment, never prefix it `NEXT_PUBLIC_`, and never
+commit it:
+
+```bash
+# .env.local — server-side, gitignored
+BUDGETARY_API_KEY=<your budgetary.tools key>
+# optional: override the base (defaults to https://api.budgetary.tools)
+BUDGETARY_API_BASE=https://api.budgetary.tools
+```
+
+```ts
+// Server-side only (route handler, server action, server component).
+// fetchEstimate reads BUDGETARY_API_KEY from the environment; the browser
+// never sees it. Called client-side, real mode refuses to run.
+const result = await fetchEstimate(
+  { query, model },
+  { mode: "real", context: { team: "acme" } },
+);
+```
+
 ## Project structure
 
 ```
@@ -50,6 +128,7 @@ app/
   api/estimate/route.ts   Key-holding proxy → budgetary.tools /v1/estimate
 components/               Presentational + the DryrunApp client controller
 lib/
+  mode.ts                 Mode switch (demo|real): base / endpoint / auth
   budgetary.ts            API contract types, parseEstimate, fetchEstimate
   rateLimit.ts            Per-IP in-memory limiter (proxy only)
   catalog.ts              Catalog loader + Open WebUI pin constants
@@ -64,7 +143,9 @@ data/openwebui-tasks.json Static catalog (task descriptions only)
   proxy route. It is never prefixed `NEXT_PUBLIC_`, never sent to the browser,
   and never logged. (CI/verification scans the built `.next` output to confirm
   the key string is absent.)
-- The browser only ever calls the same-origin `/api/estimate` route.
+- In demo mode the browser only ever calls the same-origin `/api/estimate`
+  route. Real mode runs server-side only — `fetchEstimate` refuses to attach a
+  key in the browser, and the key string is absent from the client bundle.
 - The proxy rate-limits per IP and honors a `DRYRUNS_DISABLED` kill switch.
 - No prompts or results are stored anywhere — no telemetry in the MVP.
 

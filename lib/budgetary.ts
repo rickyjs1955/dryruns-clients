@@ -10,6 +10,8 @@
  * what the hosted API returns.
  */
 
+import { ApiMode, DEFAULT_MODE, MODES } from "./mode";
+
 export const SCENARIOS = [
   "confident",
   "uncertain",
@@ -128,29 +130,16 @@ function friendlyError(code: string | undefined, fallback: string): string {
   return fallback;
 }
 
-/**
- * Browser-side: ask the local proxy for an estimate. Never talks to the
- * hosted API directly — that path holds the secret key server-side only.
- */
-export async function fetchEstimate(
-  input: EstimateInput,
-  signal?: AbortSignal,
-): Promise<EstimateResult> {
-  let res: Response;
-  try {
-    res = await fetch("/api/estimate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-      signal,
-    });
-  } catch {
-    return {
-      status: "error",
-      message: friendlyError("upstream_error", ERROR_MESSAGES.upstream_error),
-    };
-  }
+function errorResult(code: string): EstimateResult {
+  return {
+    status: "error",
+    code,
+    message: friendlyError(code, ERROR_MESSAGES.upstream_error),
+  };
+}
 
+/** Turn a raw HTTP response into a typed result. Shared by both modes. */
+async function toResult(res: Response): Promise<EstimateResult> {
   let payload: unknown = null;
   try {
     payload = await res.json();
@@ -171,14 +160,120 @@ export async function fetchEstimate(
   }
 
   const estimate = parseEstimate(payload);
-  if (!estimate) {
-    return {
-      status: "error",
-      message: friendlyError("upstream_error", ERROR_MESSAGES.upstream_error),
-    };
-  }
+  if (!estimate) return errorResult("upstream_error");
 
   return estimate.void
     ? { status: "void", estimate }
     : { status: "ok", estimate };
+}
+
+export interface FetchEstimateOptions {
+  /** Which API mode to use. Defaults to "demo". */
+  mode?: ApiMode;
+  signal?: AbortSignal;
+  /**
+   * Override the base URL. Demo defaults to same-origin (""), so the web app's
+   * keyless proxy is reached relatively. Real defaults to BUDGETARY_API_BASE
+   * or the canonical hosted base.
+   */
+  baseUrl?: string;
+  /**
+   * Real mode only: server-side bearer key. Defaults to
+   * process.env.BUDGETARY_API_KEY. Never read in, or shipped to, the browser.
+   */
+  apiKey?: string;
+  /** Real mode only: optional context passed through to the hosted API. */
+  context?: Record<string, unknown>;
+}
+
+/** Demo mode: keyless, same-origin POST to the dryruns.tools proxy. */
+async function fetchViaDemo(
+  input: EstimateInput,
+  opts: FetchEstimateOptions,
+): Promise<EstimateResult> {
+  const url = `${opts.baseUrl ?? ""}${MODES.demo.endpoint}`;
+  let res: Response;
+  try {
+    // The proxy injects context (host + project_id) and attaches the key
+    // server-side, so the browser sends no credentials.
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: input.query,
+        ...(input.model ? { model: input.model } : {}),
+      }),
+      signal: opts.signal,
+    });
+  } catch {
+    return errorResult("upstream_error");
+  }
+  return toResult(res);
+}
+
+/**
+ * Real mode: server-side POST straight to the hosted API with
+ * `Authorization: Bearer <key>` and any caller-supplied context. The key is
+ * read from the server environment; this path must never run in the browser.
+ */
+async function fetchViaReal(
+  input: EstimateInput,
+  opts: FetchEstimateOptions,
+): Promise<EstimateResult> {
+  if (typeof window !== "undefined") {
+    // Real mode handles a secret key — refuse to run it client-side.
+    return errorResult("misconfigured");
+  }
+  const apiKey = opts.apiKey ?? process.env.BUDGETARY_API_KEY;
+  if (!apiKey) return errorResult("misconfigured");
+
+  const base = (
+    opts.baseUrl ??
+    process.env.BUDGETARY_API_BASE ??
+    MODES.real.base
+  ).replace(/\/+$/, "");
+  const url = `${base}${MODES.real.endpoint}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: input.query,
+        ...(input.model ? { model: input.model } : {}),
+        ...(opts.context ? { context: opts.context } : {}),
+      }),
+      signal: opts.signal,
+    });
+  } catch {
+    return errorResult("upstream_error");
+  }
+  return toResult(res);
+}
+
+/**
+ * Ask the hosted estimate API for a token-spend estimate, returning the same
+ * typed {@link EstimateResult} in both modes.
+ *
+ *  - demo (default): a keyless, same-origin POST to the dryruns.tools proxy,
+ *    which holds the key and injects context server-side. Safe in the browser.
+ *  - real: a server-side POST straight to the hosted API with
+ *    `Authorization: Bearer <key>` and any caller-supplied context. The key is
+ *    read from the server environment and is never sent to the browser.
+ *
+ * On void or error this returns an honest result — it never fabricates a number.
+ */
+export async function fetchEstimate(
+  input: EstimateInput,
+  opts: FetchEstimateOptions = {},
+): Promise<EstimateResult> {
+  const mode = opts.mode ?? DEFAULT_MODE;
+  return mode === "real"
+    ? fetchViaReal(input, opts)
+    : fetchViaDemo(input, opts);
 }

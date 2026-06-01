@@ -42,7 +42,10 @@ export function DryrunApp() {
       setResult(null);
       setLoading(true);
 
-      const res = await fetchEstimate({ query, model }, controller.signal);
+      // Web app uses demo mode (the default): keyless, same-origin proxy.
+      const res = await fetchEstimate({ query, model }, {
+        signal: controller.signal,
+      });
       if (controller.signal.aborted) return;
       setResult(res);
       setLoading(false);
