@@ -57,26 +57,20 @@ function jsonError(
   );
 }
 
+/** Default free-text grouping label for this demo's estimates. */
+const DEFAULT_PROJECT_ID = "openwebui-demo";
+
 /**
  * Build the EstimateContext the proxy attaches to every request. `host` is
- * always "dryruns". `project_id` and `depth_budget` are optional server-side
- * config (env) — the API needs a project_id that identifies an indexed
- * codebase to return a real distribution; without it the API replies
- * out_of_domain/void. These are deployment config, not browser input.
+ * always "dryruns". `project_id` is an optional free-text label used only to
+ * group estimates — it does NOT select or index a codebase. It defaults to
+ * "openwebui-demo" and can be overridden via BUDGETARY_PROJECT_ID. Server-side
+ * config, not browser input.
  */
 function buildContext(): Record<string, unknown> {
-  const context: Record<string, unknown> = { host: "dryruns" };
-
-  const projectId = process.env.BUDGETARY_PROJECT_ID?.trim();
-  if (projectId) context.project_id = projectId;
-
-  const depthRaw = process.env.BUDGETARY_DEPTH_BUDGET;
-  if (depthRaw) {
-    const depth = Number.parseInt(depthRaw, 10);
-    if (Number.isFinite(depth) && depth >= 0) context.depth_budget = depth;
-  }
-
-  return context;
+  const projectId =
+    process.env.BUDGETARY_PROJECT_ID?.trim() || DEFAULT_PROJECT_ID;
+  return { host: "dryruns", project_id: projectId };
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

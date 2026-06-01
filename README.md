@@ -106,8 +106,7 @@ number).
 | ---------------------------- | -------- | -------------------------------------------------------------- |
 | `BUDGETARY_API_BASE`         | yes      | Base URL of the hosted API, e.g. `https://api.budgetary.tools` |
 | `BUDGETARY_API_KEY`          | yes      | Server-side bearer token. Never exposed to the browser.        |
-| `BUDGETARY_PROJECT_ID`       | rec.     | Indexed codebase to estimate against (`context.project_id`). Without it the API returns `out_of_domain`/void for every task. |
-| `BUDGETARY_DEPTH_BUDGET`     | no       | Optional exploration-depth hint (`context.depth_budget`), non-negative integer. |
+| `BUDGETARY_PROJECT_ID`       | no       | Free-text label for grouping estimates (`context.project_id`). Defaults to `openwebui-demo`. Not a codebase selector. |
 | `DRYRUNS_DISABLED`           | no       | Kill switch — `1`/`true` makes the proxy return a 503.         |
 | `DRYRUNS_RATE_LIMIT_PER_MIN` | no       | Per-IP request cap per minute (default `12`).                  |
 
