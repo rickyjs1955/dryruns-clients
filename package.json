@@ -4,6 +4,10 @@
   "private": true,
   "description": "dryruns.tools — see what an AI coding task costs in tokens before you run it. A free demo by budgetary.tools.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thriftell/dryruns-clients.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
